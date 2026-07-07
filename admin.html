@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TGW Events — Staff Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root{
+    --forest:#1B2B1E; --linen:#F3EEE3; --linen-soft:#FAF7EF; --brass:#B68D52;
+    --ember:#8C3B2E; --ink:#15140F; --line: rgba(20,20,15,0.15);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Work Sans', Arial, sans-serif; background:var(--linen); color:var(--ink);}
+  .wrap{max-width:900px; margin:0 auto; padding:2rem 1.25rem;}
+  h1{font-size:1.4rem; margin:0 0 1.25rem;}
+  .card{background:var(--linen-soft); border:1px solid var(--line); border-radius:12px; padding:1.25rem; margin-bottom:1rem;}
+  label{display:block; font-size:.85rem; margin-bottom:.9rem;}
+  input, textarea{display:block; width:100%; margin-top:.3rem; padding:.55rem .6rem; border:1px solid var(--line); border-radius:6px; font-size:.95rem; font-family:inherit;}
+  button{cursor:pointer; border:none; border-radius:8px; padding:.6rem 1rem; font-size:.9rem; font-weight:600; background:var(--brass); color:#fff;}
+  button:disabled{opacity:.5; cursor:default;}
+  button.secondary{background:transparent; color:var(--ink); border:1px solid var(--line);}
+  .order-row{display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:.9rem 0; border-bottom:1px solid var(--line);}
+  .order-row:last-child{border-bottom:none;}
+  .order-meta{font-size:.85rem; color:rgba(20,20,15,.65);}
+  .msg{font-size:.85rem; margin-top:.4rem;}
+  .msg.error{color:var(--ember);}
+  .msg.ok{color:#2f6b3a;}
+  #topbar{display:flex; justify-content:space-between; align-items:center;}
+  .hidden{display:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="topbar">
+    <h1>TGW Events — Staff Admin</h1>
+    <button id="signOutBtn" class="secondary hidden">Sign out</button>
+  </div>
+
+  <div id="loginCard" class="card">
+    <form id="loginForm">
+      <label>Email<input type="email" name="email" required autocomplete="username"></label>
+      <label>Password<input type="password" name="password" required autocomplete="current-password"></label>
+      <button type="submit">Sign in</button>
+      <p class="msg error hidden" id="loginError">Sign-in failed — check your email and password.</p>
+    </form>
+  </div>
+
+  <div id="appArea" class="hidden">
+    <div class="card">
+      <h2 style="margin-top:0;">Pending orders</h2>
+      <div id="ordersList"><p class="order-meta">Loading…</p></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0;">Add an event</h2>
+      <form id="addEventForm">
+        <label>Event ID (URL slug, e.g. "summer-jazz-night")<input type="text" name="id" required></label>
+        <label>Title<input type="text" name="title" required></label>
+        <label>Organiser<input type="text" name="organiser" required></label>
+        <label>"Presents" line (e.g. "Acme Co. presents")<input type="text" name="presents"></label>
+        <label>Date, display text (e.g. "Saturday, 12 September 2026")<input type="text" name="dateDisplay" required></label>
+        <label>Event date (YYYY-MM-DD)<input type="date" name="eventDate" required></label>
+        <label>Time text (e.g. "18:00 till late")<input type="text" name="time"></label>
+        <label>Venue name<input type="text" name="venueName" required></label>
+        <label>Venue address<input type="text" name="venueAddress" required></label>
+        <label>Age restriction<input type="text" name="ageRestriction"></label>
+        <label>Dress code<input type="text" name="dressCode"></label>
+        <label>Description<textarea name="description" rows="3"></textarea></label>
+        <label>Ticket type name (e.g. "Standard entry")<input type="text" name="ticketName" required></label>
+        <label>Ticket price (Rand, e.g. 500)<input type="number" name="ticketPrice" min="0" step="0.01" required></label>
+        <label>Ticket description<input type="text" name="ticketDescription"></label>
+        <label>Bank account holder<input type="text" name="bankAccountHolder"></label>
+        <label>Bank name<input type="text" name="bankName"></label>
+        <label>Bank account number<input type="text" name="bankAccountNumber"></label>
+        <label>Bank account type<input type="text" name="bankAccountType"></label>
+        <label>Bank branch code<input type="text" name="bankBranchCode"></label>
+        <button type="submit">Create event</button>
+        <p class="msg hidden" id="addEventMsg"></p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+  // Filled in once the Supabase project exists — same values as index.html.
+  const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
+  const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";
+  const FUNCTIONS_BASE = SUPABASE_URL + "/functions/v1";
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const loginCard = document.getElementById("loginCard");
+  const appArea = document.getElementById("appArea");
+  const signOutBtn = document.getElementById("signOutBtn");
+  const loginError = document.getElementById("loginError");
+  const ordersList = document.getElementById("ordersList");
+
+  async function callFunction(name, body){
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session ? sessionData.session.access_token : "";
+    const res = await fetch(FUNCTIONS_BASE + "/" + name, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify(body || {})
+    });
+    const json = await res.json().catch(function(){ return {}; });
+    return { ok: res.ok, status: res.status, json: json };
+  }
+
+  function formatRands(cents){
+    return "R" + (cents / 100).toFixed(2);
+  }
+
+  async function loadOrders(){
+    ordersList.innerHTML = "<p class=\"order-meta\">Loading…</p>";
+    const result = await callFunction("list-pending-orders");
+    if (!result.ok){
+      ordersList.innerHTML = "<p class=\"msg error\">Couldn’t load orders.</p>";
+      return;
+    }
+    const orders = result.json.orders || [];
+    if (orders.length === 0){
+      ordersList.innerHTML = "<p class=\"order-meta\">No pending orders right now.</p>";
+      return;
+    }
+    ordersList.innerHTML = "";
+    orders.forEach(function(o){
+      const row = document.createElement("div");
+      row.className = "order-row";
+      const itemsText = o.lineItems.map(function(li){ return li.quantity + "x " + li.name; }).join(", ");
+      row.innerHTML =
+        "<div>" +
+          "<strong>" + o.orderRef + "</strong> — " + o.eventTitle + "<br>" +
+          "<span class=\"order-meta\">" + o.attendeeName + " · " + o.attendeeEmail + " · " + o.payMethod.toUpperCase() + " · " + itemsText + " · " + formatRands(o.totalCents) + "</span>" +
+          "<p class=\"msg hidden\"></p>" +
+        "</div>";
+      const btn = document.createElement("button");
+      btn.textContent = "Confirm payment";
+      btn.addEventListener("click", async function(){
+        btn.disabled = true;
+        btn.textContent = "Confirming…";
+        const msgEl = row.querySelector(".msg");
+        const confirmResult = await callFunction("confirm-order", { orderId: o.id });
+        if (confirmResult.ok && confirmResult.json.success){
+          row.style.opacity = "0.5";
+          msgEl.textContent = "Confirmed — " + confirmResult.json.ticketsCreated + " ticket(s) emailed.";
+          msgEl.classList.remove("hidden", "error");
+          msgEl.classList.add("ok");
+          btn.remove();
+        } else {
+          btn.disabled = false;
+          btn.textContent = "Confirm payment";
+          msgEl.textContent = "Failed at stage \"" + (confirmResult.json.stage || "unknown") + "\": " + (confirmResult.json.error || "unknown error");
+          msgEl.classList.remove("hidden", "ok");
+          msgEl.classList.add("error");
+        }
+      });
+      row.appendChild(btn);
+      ordersList.appendChild(row);
+    });
+  }
+
+  async function showLoggedIn(){
+    loginCard.classList.add("hidden");
+    appArea.classList.remove("hidden");
+    signOutBtn.classList.remove("hidden");
+    await loadOrders();
+  }
+
+  function showLoggedOut(){
+    loginCard.classList.remove("hidden");
+    appArea.classList.add("hidden");
+    signOutBtn.classList.add("hidden");
+  }
+
+  document.getElementById("loginForm").addEventListener("submit", async function(e){
+    e.preventDefault();
+    loginError.classList.add("hidden");
+    const fd = new FormData(e.target);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: fd.get("email"),
+      password: fd.get("password")
+    });
+    if (error){
+      loginError.classList.remove("hidden");
+      return;
+    }
+    showLoggedIn();
+  });
+
+  signOutBtn.addEventListener("click", async function(){
+    await supabase.auth.signOut();
+    showLoggedOut();
+  });
+
+  document.getElementById("addEventForm").addEventListener("submit", async function(e){
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const msgEl = document.getElementById("addEventMsg");
+    msgEl.classList.add("hidden");
+
+    const eventRow = {
+      id: fd.get("id").trim(),
+      title: fd.get("title").trim(),
+      organiser: fd.get("organiser").trim(),
+      presents: fd.get("presents").trim() || null,
+      date_display: fd.get("dateDisplay").trim(),
+      event_date: fd.get("eventDate"),
+      time: fd.get("time").trim() || null,
+      venue_name: fd.get("venueName").trim(),
+      venue_address: fd.get("venueAddress").trim(),
+      age_restriction: fd.get("ageRestriction").trim() || null,
+      dress_code: fd.get("dressCode").trim() || null,
+      description: fd.get("description").trim() || null,
+      bank_account_holder: fd.get("bankAccountHolder").trim() || null,
+      bank_name: fd.get("bankName").trim() || null,
+      bank_account_number: fd.get("bankAccountNumber").trim() || null,
+      bank_account_type: fd.get("bankAccountType").trim() || null,
+      bank_branch_code: fd.get("bankBranchCode").trim() || null
+    };
+
+    const { error: eventErr } = await supabase.from("events").insert(eventRow);
+    if (eventErr){
+      msgEl.textContent = "Couldn’t create event: " + eventErr.message;
+      msgEl.classList.remove("hidden", "ok");
+      msgEl.classList.add("error");
+      return;
+    }
+
+    const priceRand = parseFloat(fd.get("ticketPrice"));
+    const { error: ttErr } = await supabase.from("ticket_types").insert({
+      event_id: eventRow.id,
+      slug: "standard",
+      name: fd.get("ticketName").trim(),
+      price_cents: Math.round(priceRand * 100),
+      description: fd.get("ticketDescription").trim() || null
+    });
+    if (ttErr){
+      msgEl.textContent = "Event created, but ticket type failed: " + ttErr.message;
+      msgEl.classList.remove("hidden", "ok");
+      msgEl.classList.add("error");
+      return;
+    }
+
+    msgEl.textContent = "Event created.";
+    msgEl.classList.remove("hidden", "error");
+    msgEl.classList.add("ok");
+    e.target.reset();
+  });
+
+  supabase.auth.getSession().then(function(result){
+    if (result.data.session) showLoggedIn(); else showLoggedOut();
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TGW Events — Door Scan</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root{
+    --forest:#1B2B1E; --linen:#F3EEE3; --linen-soft:#FAF7EF; --brass:#B68D52;
+    --ember:#8C3B2E; --ink:#15140F; --line: rgba(20,20,15,0.15); --ok:#2f6b3a;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Work Sans', Arial, sans-serif; background:var(--forest); color:var(--linen); min-height:100vh;}
+  .wrap{max-width:480px; margin:0 auto; padding:1.5rem 1.25rem;}
+  h1{font-size:1.2rem; margin:0 0 1rem;}
+  .card{background:var(--linen-soft); color:var(--ink); border-radius:12px; padding:1.25rem; margin-bottom:1rem;}
+  label{display:block; font-size:.85rem; margin-bottom:.9rem;}
+  input{display:block; width:100%; margin-top:.3rem; padding:.55rem .6rem; border:1px solid var(--line); border-radius:6px; font-size:.95rem;}
+  button{cursor:pointer; border:none; border-radius:8px; padding:.6rem 1rem; font-size:.9rem; font-weight:600; background:var(--brass); color:#fff; width:100%;}
+  #reader{width:100%; border-radius:12px; overflow:hidden;}
+  .hidden{display:none;}
+  #result{border-radius:12px; padding:1.5rem; text-align:center; font-size:1.1rem; font-weight:700; margin-top:1rem;}
+  #result.valid{background:var(--ok); color:#fff;}
+  #result.used{background:#a67c00; color:#fff;}
+  #result.invalid{background:var(--ember); color:#fff;}
+  #result p{margin:.3rem 0; font-weight:400; font-size:.9rem;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>TGW Events — Door Scan</h1>
+
+  <div id="loginCard" class="card">
+    <form id="loginForm">
+      <label>Email<input type="email" name="email" required autocomplete="username"></label>
+      <label>Password<input type="password" name="password" required autocomplete="current-password"></label>
+      <button type="submit">Sign in</button>
+      <p id="loginError" class="hidden" style="color:var(--ember); font-size:.85rem;">Sign-in failed — check your email and password.</p>
+    </form>
+  </div>
+
+  <div id="scanArea" class="hidden">
+    <div id="reader"></div>
+    <div id="result" class="hidden"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+  // Filled in once the Supabase project exists — same values as index.html.
+  const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
+  const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";
+  const FUNCTIONS_BASE = SUPABASE_URL + "/functions/v1";
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const loginCard = document.getElementById("loginCard");
+  const scanArea = document.getElementById("scanArea");
+  const loginError = document.getElementById("loginError");
+  const resultEl = document.getElementById("result");
+
+  let scanner = null;
+  let processing = false;
+
+  async function checkIn(qrToken){
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session ? sessionData.session.access_token : "";
+    const res = await fetch(FUNCTIONS_BASE + "/check-in", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({ qrToken: qrToken })
+    });
+    return res.json().catch(function(){ return {}; });
+  }
+
+  function showResult(cls, html){
+    resultEl.className = cls;
+    resultEl.innerHTML = html;
+    resultEl.classList.remove("hidden");
+  }
+
+  async function onScanSuccess(decodedText){
+    if (processing) return;
+    processing = true;
+    const data = await checkIn(decodedText);
+    if (!data.valid){
+      showResult("invalid", "<div>INVALID TICKET</div><p>" + (data.error || "") + "</p>");
+    } else if (data.alreadyUsed){
+      showResult("used", "<div>ALREADY SCANNED</div><p>" + data.holderName + " — " + data.ticketType + "</p><p>Used at " + new Date(data.usedAt).toLocaleTimeString() + "</p>");
+    } else {
+      showResult("valid", "<div>VALID</div><p>" + data.holderName + " — " + data.ticketType + "</p><p>" + data.eventTitle + "</p>");
+    }
+    setTimeout(function(){ processing = false; }, 2000);
+  }
+
+  function startScanner(){
+    scanner = new Html5Qrcode("reader");
+    scanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      onScanSuccess
+    ).catch(function(err){
+      showResult("invalid", "<div>Camera error</div><p>" + err + "</p>");
+    });
+  }
+
+  async function showLoggedIn(){
+    loginCard.classList.add("hidden");
+    scanArea.classList.remove("hidden");
+    startScanner();
+  }
+
+  function showLoggedOut(){
+    loginCard.classList.remove("hidden");
+    scanArea.classList.add("hidden");
+  }
+
+  document.getElementById("loginForm").addEventListener("submit", async function(e){
+    e.preventDefault();
+    loginError.classList.add("hidden");
+    const fd = new FormData(e.target);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: fd.get("email"),
+      password: fd.get("password")
+    });
+    if (error){
+      loginError.classList.remove("hidden");
+      return;
+    }
+    showLoggedIn();
+  });
+
+  supabase.auth.getSession().then(function(result){
+    if (result.data.session) showLoggedIn(); else showLoggedOut();
+  });
+</script>
+</body>
+</html>
