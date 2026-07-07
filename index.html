@@ -279,8 +279,8 @@
   /* ---------- Configuration ---------- */
 
   // Filled in once the Supabase project exists — see supabase/ in this repo.
-  const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
-  const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";
+  const SUPABASE_URL = "https://ulrgrlpkawudxuqwaksf.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_HSUdbXeNbE3_pRCSvHwGjw_rOt_MGdh";
   const FUNCTIONS_BASE = SUPABASE_URL + "/functions/v1";
 
   // Fallback poster image, used only until an event's real poster has been
@@ -300,7 +300,7 @@
 
   async function loadEvents(){
     const res = await fetch(FUNCTIONS_BASE + "/get-events", {
-      headers: { "apikey": SUPABASE_ANON_KEY }
+      headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": "Bearer " + SUPABASE_ANON_KEY }
     });
     if (!res.ok) throw new Error("events_fetch_failed");
     const data = await res.json();
@@ -634,7 +634,7 @@
 
       fetch(FUNCTIONS_BASE + "/create-order", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
+        headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY, "Authorization": "Bearer " + SUPABASE_ANON_KEY },
         body: JSON.stringify({
           eventId: ev.id,
           attendee: attendee,
@@ -854,7 +854,7 @@
   function renderTicketPage(token){
     app.innerHTML = '<div class="wrap page-pad"><p>Loading your ticket…</p></div>';
     fetch(FUNCTIONS_BASE + "/get-ticket?token=" + encodeURIComponent(token), {
-      headers: { "apikey": SUPABASE_ANON_KEY }
+      headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": "Bearer " + SUPABASE_ANON_KEY }
     })
       .then(function(res){
         if (!res.ok) throw new Error("ticket_fetch_failed");
