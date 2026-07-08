@@ -89,6 +89,9 @@
   const SUPABASE_URL = "https://ulrgrlpkawudxuqwaksf.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_HSUdbXeNbE3_pRCSvHwGjw_rOt_MGdh";
   const FUNCTIONS_BASE = SUPABASE_URL + "/functions/v1";
+  // Guest-facing site, for building shareable ticket links as a fallback
+  // when automated email delivery isn't available or fails for an order.
+  const SITE_BASE = "https://tgwgroup-design.github.io/tgw-events/";
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -116,6 +119,37 @@
 
   function formatRands(cents){
     return "R" + (cents / 100).toFixed(2);
+  }
+
+  function renderTicketLinks(row, ticketTokens){
+    const list = document.createElement("div");
+    list.style.marginTop = ".5rem";
+    ticketTokens.forEach(function(token, idx){
+      const url = SITE_BASE + "#/ticket/" + encodeURIComponent(token);
+      const line = document.createElement("div");
+      line.style.marginBottom = ".3rem";
+      const link = document.createElement("a");
+      link.href = url;
+      link.target = "_blank";
+      link.textContent = "Ticket " + (idx + 1) + " link";
+      const copyBtn = document.createElement("button");
+      copyBtn.type = "button";
+      copyBtn.className = "secondary";
+      copyBtn.style.marginLeft = ".5rem";
+      copyBtn.style.padding = ".2rem .5rem";
+      copyBtn.style.fontSize = ".8rem";
+      copyBtn.textContent = "Copy";
+      copyBtn.addEventListener("click", function(){
+        navigator.clipboard.writeText(url).then(function(){
+          copyBtn.textContent = "Copied";
+          setTimeout(function(){ copyBtn.textContent = "Copy"; }, 1500);
+        });
+      });
+      line.appendChild(link);
+      line.appendChild(copyBtn);
+      list.appendChild(line);
+    });
+    row.appendChild(list);
   }
 
   async function loadOrders(){
@@ -148,12 +182,26 @@
         btn.textContent = "Confirming…";
         const msgEl = row.querySelector(".msg");
         const confirmResult = await callFunction("confirm-order", { orderId: o.id });
+        const ticketTokens = confirmResult.json.ticketTokens || [];
+
         if (confirmResult.ok && confirmResult.json.success){
           row.style.opacity = "0.5";
           msgEl.textContent = "Confirmed — " + confirmResult.json.ticketsCreated + " ticket(s) emailed.";
           msgEl.classList.remove("hidden", "error");
           msgEl.classList.add("ok");
           btn.remove();
+          if (ticketTokens.length) renderTicketLinks(row, ticketTokens);
+        } else if (ticketTokens.length) {
+          // Tickets were created even though the email step failed (e.g.
+          // sender domain not verified yet) -- the order is already marked
+          // confirmed, so retrying "Confirm payment" would just fail again.
+          // Surface direct ticket links so staff can share them manually.
+          row.style.opacity = "0.85";
+          msgEl.textContent = "Tickets created, but the email didn’t send (" + (confirmResult.json.error || "unknown error") + "). Share these links with the guest manually:";
+          msgEl.classList.remove("hidden", "ok");
+          msgEl.classList.add("error");
+          btn.remove();
+          renderTicketLinks(row, ticketTokens);
         } else {
           btn.disabled = false;
           btn.textContent = "Confirm payment";

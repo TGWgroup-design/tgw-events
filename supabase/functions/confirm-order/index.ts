@@ -189,16 +189,29 @@ Deno.serve(async (req: Request) => {
       attachments,
     });
 
+    // Tickets are already created at this point regardless of whether the
+    // email send below succeeds, so surface their tokens either way -- this
+    // is what lets admin.html offer a manual "share this link" fallback when
+    // automated email delivery isn't available yet (e.g. sender domain not
+    // verified) or simply fails for one guest.
+    const ticketTokens = createdTickets.map((t) => t.qrToken);
+
     if (!emailResult.ok) {
       return jsonResponse({
         success: false,
         stage: "email",
         error: emailResult.error,
         ticketsCreated: createdTickets.length,
+        ticketTokens,
       }, 502);
     }
 
-    return jsonResponse({ success: true, ticketsCreated: createdTickets.length, emailSent: true });
+    return jsonResponse({
+      success: true,
+      ticketsCreated: createdTickets.length,
+      emailSent: true,
+      ticketTokens,
+    });
   } catch (_err) {
     return jsonResponse({ success: false, stage: "unexpected", error: String(_err) }, 500);
   }
