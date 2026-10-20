@@ -94,6 +94,9 @@
   .invite-inner{ text-align:center; padding:2rem 1.5rem;}
   .invite-inner h3{ font-family:'Fraunces',serif; color:var(--forest); margin:0 0 .5rem; font-size:1.2rem;}
   .invite-inner p{ color:rgba(20,20,15,.6); margin-bottom:1.2rem; font-size:.92rem;}
+  .events-empty{ color:rgba(20,20,15,.6); font-size:.95rem;}
+  .event-card-past{ opacity:.78;}
+  .event-card-past .event-card-foot .status-badge{ margin-bottom:0;}
 
   /* how it works */
   .how-section{ padding:5rem 0 6rem; background:var(--linen-soft);}
@@ -329,6 +332,22 @@
     return EVENTS.find(function(e){ return e.id === id; });
   }
 
+  function todayStr(){
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function isPastEvent(ev){
+    return !!ev.eventDate && ev.eventDate < todayStr();
+  }
+
+  function upcomingEvents(){
+    return EVENTS.filter(function(e){ return !isPastEvent(e); });
+  }
+
+  function pastEvents(){
+    return EVENTS.filter(isPastEvent).slice().reverse();
+  }
+
   // In-memory cart, keyed by eventId -> ticketTypeId -> qty. Lives only for this page session
   // (it's intentionally not persisted to storage — see README notes for why).
   const cart = {};
@@ -369,7 +388,9 @@
   /* ---------- Views ---------- */
 
   function renderHome(){
-    const featured = EVENTS[0];
+    const upcoming = upcomingEvents();
+    const past = pastEvents();
+    const featured = upcoming[0] || EVENTS[EVENTS.length - 1];
     app.innerHTML =
       '<section class="hero"><div class="wrap hero-grid">' +
         '<div class="hero-copy">' +
@@ -378,28 +399,43 @@
           '<p class="hero-sub">The ticketing ecosystem for celebrations from the people who throw them best. Book your spot online, no booking fees, no fuss.</p>' +
           '<a href="#events" class="btn btn-ghost-light">See what\u2019s on</a>' +
         '</div>' +
-        '<div class="hero-feature arch">' +
-          '<img src="' + (featured.image || POSTER_DATA_URI) + '" alt="' + escapeHtml(featured.title) + ' poster" class="hero-feature-img">' +
-          '<div class="hero-feature-overlay">' +
-            '<p class="hero-feature-label">Now booking</p>' +
-            '<h3>' + escapeHtml(featured.title) + '</h3>' +
-            '<p class="hero-feature-org">' + escapeHtml(featured.presents) + '</p>' +
-            '<p class="hero-feature-meta">' + escapeHtml(featured.dateDisplay) + ' \u00b7 ' + escapeHtml(featured.venueName) + '</p>' +
-            '<div class="hero-feature-row">' +
-              '<span class="price-tag">From ' + formatCurrency(minPrice(featured)) + ' pp</span>' +
-              '<a href="#/event/' + featured.id + '" class="btn btn-brass">Get tickets</a>' +
+        (featured ?
+          '<div class="hero-feature arch">' +
+            '<img src="' + (featured.image || POSTER_DATA_URI) + '" alt="' + escapeHtml(featured.title) + ' poster" class="hero-feature-img">' +
+            '<div class="hero-feature-overlay">' +
+              '<p class="hero-feature-label">' + (isPastEvent(featured) ? 'Recently hosted' : 'Now booking') + '</p>' +
+              '<h3>' + escapeHtml(featured.title) + '</h3>' +
+              '<p class="hero-feature-org">' + escapeHtml(featured.presents) + '</p>' +
+              '<p class="hero-feature-meta">' + escapeHtml(featured.dateDisplay) + ' \u00b7 ' + escapeHtml(featured.venueName) + '</p>' +
+              '<div class="hero-feature-row">' +
+                (isPastEvent(featured) ?
+                  '<a href="#/event/' + featured.id + '" class="btn btn-brass">View recap</a>'
+                :
+                  '<span class="price-tag">From ' + formatCurrency(minPrice(featured)) + ' pp</span>' +
+                  '<a href="#/event/' + featured.id + '" class="btn btn-brass">Get tickets</a>'
+                ) +
+              '</div>' +
             '</div>' +
-          '</div>' +
-        '</div>' +
+          '</div>'
+        : '') +
       '</div></section>' +
 
       '<section id="events" class="events-section"><div class="wrap">' +
         '<div class="section-head"><h2>Upcoming events</h2><p>More on the way, here\u2019s what\u2019s open for booking right now.</p></div>' +
         '<div class="events-grid">' +
-          EVENTS.map(eventCardHTML).join("") +
+          (upcoming.length > 0 ? upcoming.map(eventCardHTML).join("") : '<p class="events-empty">No upcoming events right now \u2014 check back soon.</p>') +
           inviteCardHTML() +
         '</div>' +
       '</div></section>' +
+
+      (past.length > 0 ?
+        '<section id="past-events" class="events-section past-events-section"><div class="wrap">' +
+          '<div class="section-head"><h2>Previous events</h2><p>A look back at what we\u2019ve hosted.</p></div>' +
+          '<div class="events-grid">' +
+            past.map(pastEventCardHTML).join("") +
+          '</div>' +
+        '</div></section>'
+      : '') +
 
       '<section class="how-section"><div class="wrap">' +
         '<div class="section-head"><h2>How it works</h2></div>' +
@@ -428,6 +464,23 @@
     );
   }
 
+  function pastEventCardHTML(ev){
+    return (
+      '<article class="event-card event-card-past">' +
+        '<div class="event-card-image arch"><img src="' + (ev.image || POSTER_DATA_URI) + '" alt="' + escapeHtml(ev.title) + ' poster"></div>' +
+        '<div class="event-card-body">' +
+          '<p class="event-card-org">' + escapeHtml(ev.presents) + '</p>' +
+          '<h3>' + escapeHtml(ev.title) + '</h3>' +
+          '<p class="event-card-meta">' + escapeHtml(ev.dateDisplay) + ' · ' + escapeHtml(ev.venueName) + '</p>' +
+          '<div class="event-card-foot">' +
+            '<span class="status-badge">Past event</span>' +
+            '<a href="#/event/' + ev.id + '" class="btn btn-outline">View recap</a>' +
+          '</div>' +
+        '</div>' +
+      '</article>'
+    );
+  }
+
   function inviteCardHTML(){
     return (
       '<article class="event-card event-card-invite"><div class="invite-inner">' +
@@ -441,6 +494,7 @@
   function renderEventPage(id){
     const ev = getEvent(id);
     if (!ev){ app.innerHTML = notFoundHTML(); return; }
+    const past = isPastEvent(ev);
 
     app.innerHTML =
       '<div class="wrap page-pad"><a href="#/" class="back-link">\u2190 All events</a></div>' +
@@ -465,26 +519,37 @@
             '<h3>Venue</h3><p>' + escapeHtml(ev.venueName) + '<br>' + escapeHtml(ev.venueAddress) + '</p>' +
             '<div class="policy-note"><p>All ticket sales are final \u2014 no refunds or exchanges. <a href="#/policy">Read the full policy</a>.</p></div>' +
           '</div>' +
-          '<aside class="ticket-card">' +
-            '<h3>Select tickets</h3>' +
-            '<div class="ticket-types">' + ev.ticketTypes.map(function(tt){ return ticketTypeRowHTML(ev.id, tt); }).join("") + '</div>' +
-            '<div class="ticket-divider"></div>' +
-            '<div class="ticket-total-row"><span>Total</span><span id="ticketTotal">' + formatCurrency(0) + '</span></div>' +
-            '<button class="btn btn-brass btn-block" id="continueBtn" disabled>Continue to checkout</button>' +
-            '<p class="ticket-fineprint">No booking fees \u00b7 SnapScan or bank transfer</p>' +
-          '</aside>' +
+          (past ?
+            '<aside class="ticket-card">' +
+              '<span class="status-badge">Past event</span>' +
+              '<h3>This event has already taken place</h3>' +
+              '<p class="ticket-fineprint">Tickets are no longer available for ' + escapeHtml(ev.title) + '. Check the homepage for what\u2019s currently on sale.</p>' +
+              '<a href="#/" class="btn btn-outline btn-block">See upcoming events</a>' +
+            '</aside>'
+          :
+            '<aside class="ticket-card">' +
+              '<h3>Select tickets</h3>' +
+              '<div class="ticket-types">' + ev.ticketTypes.map(function(tt){ return ticketTypeRowHTML(ev.id, tt); }).join("") + '</div>' +
+              '<div class="ticket-divider"></div>' +
+              '<div class="ticket-total-row"><span>Total</span><span id="ticketTotal">' + formatCurrency(0) + '</span></div>' +
+              '<button class="btn btn-brass btn-block" id="continueBtn" disabled>Continue to checkout</button>' +
+              '<p class="ticket-fineprint">No booking fees \u00b7 SnapScan or bank transfer</p>' +
+            '</aside>'
+          ) +
         '</div>' +
       '</div>';
 
-    ev.ticketTypes.forEach(function(tt){
-      const row = document.querySelector('.ticket-type-row[data-tt="' + tt.id + '"]');
-      row.querySelector(".qty-minus").addEventListener("click", function(){ changeQty(ev, tt.id, -1); });
-      row.querySelector(".qty-plus").addEventListener("click", function(){ changeQty(ev, tt.id, 1); });
-    });
-    document.getElementById("continueBtn").addEventListener("click", function(){
-      navigate("#/checkout/" + ev.id);
-    });
-    updateTicketTotal(ev);
+    if (!past){
+      ev.ticketTypes.forEach(function(tt){
+        const row = document.querySelector('.ticket-type-row[data-tt="' + tt.id + '"]');
+        row.querySelector(".qty-minus").addEventListener("click", function(){ changeQty(ev, tt.id, -1); });
+        row.querySelector(".qty-plus").addEventListener("click", function(){ changeQty(ev, tt.id, 1); });
+      });
+      document.getElementById("continueBtn").addEventListener("click", function(){
+        navigate("#/checkout/" + ev.id);
+      });
+      updateTicketTotal(ev);
+    }
   }
 
   function ticketTypeRowHTML(eventId, tt){
@@ -532,6 +597,15 @@
   function renderCheckoutPage(eventId){
     const ev = getEvent(eventId);
     if (!ev){ app.innerHTML = notFoundHTML(); return; }
+    if (isPastEvent(ev)){
+      app.innerHTML =
+        '<div class="wrap page-pad empty-state">' +
+          '<h2>This event has already taken place</h2>' +
+          '<p>Tickets are no longer available for ' + escapeHtml(ev.title) + '.</p>' +
+          '<a class="btn btn-brass" href="#/">See upcoming events</a>' +
+        '</div>';
+      return;
+    }
 
     const lines = cart[eventId] || {};
     const lineItems = ev.ticketTypes
@@ -569,10 +643,12 @@
                 '<input type="radio" name="payMethod" value="snapscan" checked>' +
                 '<div><p class="pay-method-title">Pay via SnapScan</p><p class="pay-method-desc">Tap to pay instantly via the SnapScan app, with the amount filled in for you. We confirm once we receive it.</p></div>' +
               '</label>' +
-              '<label class="pay-method-card">' +
-                '<input type="radio" name="payMethod" value="eft">' +
-                '<div><p class="pay-method-title">Pay via bank transfer</p><p class="pay-method-desc">Pay directly into ' + escapeHtml(ev.organiser) + '\u2019s account. We confirm once we receive it.</p></div>' +
-              '</label>' +
+              (ev.bankDetails && ev.bankDetails.accountNumber ?
+                '<label class="pay-method-card">' +
+                  '<input type="radio" name="payMethod" value="eft">' +
+                  '<div><p class="pay-method-title">Pay via bank transfer</p><p class="pay-method-desc">Pay directly into ' + escapeHtml(ev.organiser) + '\u2019s account. We confirm once we receive it.</p></div>' +
+                '</label>'
+              : '') +
             '</div>' +
             '<label class="checkbox-row">' +
               '<input type="checkbox" id="ackPolicy" required>' +
@@ -722,7 +798,7 @@
           '<div class="bank-row"><span class="bank-row-label">Account holder</span><span class="bank-row-value">' + escapeHtml(bd.accountHolder) + '</span></div>' +
           '<div class="bank-row"><span class="bank-row-label">Bank</span><span class="bank-row-value">' + escapeHtml(bd.bankName) + '</span></div>' +
           '<div class="bank-row"><span class="bank-row-label">Account number</span><span class="bank-row-value">' + escapeHtml(bd.accountNumber) + ' <button type="button" class="copy-btn" data-copy="' + escapeHtml(bd.accountNumber) + '">Copy</button></span></div>' +
-          '<div class="bank-row"><span class="bank-row-label">Account type</span><span class="bank-row-value">' + escapeHtml(bd.accountType) + '</span></div>' +
+          (bd.accountType ? '<div class="bank-row"><span class="bank-row-label">Account type</span><span class="bank-row-value">' + escapeHtml(bd.accountType) + '</span></div>' : '') +
           (bd.branchCode ? '<div class="bank-row"><span class="bank-row-label">Branch code</span><span class="bank-row-value">' + escapeHtml(bd.branchCode) + '</span></div>' : '') +
         '</div>' +
 

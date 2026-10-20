@@ -20,6 +20,17 @@ function toIcsDate(d: Date): string {
   );
 }
 
+// Same as toIcsDate but WITHOUT the trailing "Z". Per RFC5545, a DATE-TIME
+// with no "Z" and no TZID is "floating" local time -- calendar apps display
+// it literally, with no timezone conversion. That's what we want for
+// DTSTART/DTEND: the numbers already represent the event's SA wall-clock
+// time, so tagging them as UTC (as toIcsDate does) would make every
+// compliant calendar client shift the displayed time by SA's UTC+2 offset.
+// DTSTAMP is the one field that correctly stays true UTC (toIcsDate).
+function toIcsDateFloating(d: Date): string {
+  return toIcsDate(d).slice(0, -1);
+}
+
 function escapeIcsText(text: string): string {
   return text.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
 }
@@ -40,15 +51,19 @@ export function buildIcsEvent(params: {
   const startHour = match ? parseInt(match[1], 10) : 18;
   const startMinute = match ? parseInt(match[2], 10) : 0;
 
-  // event_date is a plain date (no timezone data available), so we treat the
-  // stated time as local wall-clock time and encode the ics as UTC using the
-  // same numbers -- acceptable for a single-country events business where
-  // guests and venue share a timezone; calendar apps will show the same
-  // clock time rather than performing a timezone conversion.
+  // event_date is a plain date (no timezone data available), so we build the
+  // event's wall-clock numbers here and emit them as floating local time
+  // (see toIcsDateFloating) rather than tagging them as UTC.
   const start = new Date(`${eventDate}T00:00:00Z`);
   start.setUTCHours(startHour, startMinute, 0, 0);
 
-  const end = explicitEndAt ? new Date(explicitEndAt) : new Date(start.getTime() + 6 * 60 * 60 * 1000);
+  // explicitEndAt, if provided, is a true UTC timestamptz -- convert it to
+  // the same "wall-clock numbers, floating" representation by reading its
+  // SAST (UTC+2) clock time, since SA has no daylight-saving offset to worry
+  // about.
+  const end = explicitEndAt
+    ? new Date(new Date(explicitEndAt).getTime() + 2 * 60 * 60 * 1000)
+    : new Date(start.getTime() + 6 * 60 * 60 * 1000);
 
   const now = toIcsDate(new Date());
 
@@ -60,8 +75,8 @@ export function buildIcsEvent(params: {
     "BEGIN:VEVENT",
     `UID:${uid}@tgwevents`,
     `DTSTAMP:${now}`,
-    `DTSTART:${toIcsDate(start)}`,
-    `DTEND:${toIcsDate(end)}`,
+    `DTSTART:${toIcsDateFloating(start)}`,
+    `DTEND:${toIcsDateFloating(end)}`,
     `SUMMARY:${escapeIcsText(title)}`,
     `DESCRIPTION:${escapeIcsText(description)}`,
     `LOCATION:${escapeIcsText(`${venueName}, ${venueAddress}`)}`,

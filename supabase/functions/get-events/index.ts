@@ -33,6 +33,7 @@ Deno.serve(async (req: Request) => {
       organiser: ev.organiser,
       presents: ev.presents,
       dateDisplay: ev.date_display,
+      eventDate: ev.event_date,
       time: ev.time,
       venueName: ev.venue_name,
       venueAddress: ev.venue_address,

@@ -40,6 +40,11 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: "event_not_found" }, 404);
     }
 
+    const todayStr = new Date().toISOString().slice(0, 10);
+    if (event.event_date < todayStr) {
+      return jsonResponse({ error: "event_already_happened" }, 400);
+    }
+
     const { data: ticketTypes, error: ttErr } = await admin
       .from("ticket_types")
       .select("*")
