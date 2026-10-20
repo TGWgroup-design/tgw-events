@@ -492,6 +492,10 @@
     const ev = getEvent(id);
     if (!ev){ app.innerHTML = notFoundHTML(); return; }
     const past = isPastEvent(ev);
+    const hasSnapscan = ev.acceptsSnapscan !== false;
+    const hasEft = !!(ev.bankDetails && ev.bankDetails.accountNumber);
+    const hasPayment = hasSnapscan || hasEft;
+    const payMethodsText = hasSnapscan && hasEft ? "SnapScan or bank transfer" : hasSnapscan ? "SnapScan" : "bank transfer";
 
     app.innerHTML =
       '<div class="wrap page-pad"><a href="#/" class="back-link">\u2190 All events</a></div>' +
@@ -523,6 +527,12 @@
               '<p class="ticket-fineprint">Tickets are no longer available for ' + escapeHtml(ev.title) + '. Check the homepage for what\u2019s currently on sale.</p>' +
               '<a href="#/" class="btn btn-outline btn-block">See upcoming events</a>' +
             '</aside>'
+          : !hasPayment ?
+            '<aside class="ticket-card">' +
+              '<h3>Booking is by RSVP</h3>' +
+              '<p class="ticket-fineprint">' + escapeHtml(ev.title) + ' isn\u2019t booked through the site \u2014 reach out directly to reserve your spot.</p>' +
+              (ev.contactLink ? '<a href="' + escapeHtml(ev.contactLink) + '" target="_blank" rel="noopener" class="btn btn-brass btn-block">' + escapeHtml(ev.contactLabel || "Contact organiser") + '</a>' : '') +
+            '</aside>'
           :
             '<aside class="ticket-card">' +
               '<h3>Select tickets</h3>' +
@@ -530,14 +540,14 @@
               '<div class="ticket-divider"></div>' +
               '<div class="ticket-total-row"><span>Total</span><span id="ticketTotal">' + formatCurrency(0) + '</span></div>' +
               '<button class="btn btn-brass btn-block" id="continueBtn" disabled>Continue to checkout</button>' +
-              '<p class="ticket-fineprint">No booking fees \u00b7 SnapScan or bank transfer</p>' +
+              '<p class="ticket-fineprint">No booking fees \u00b7 ' + payMethodsText + '</p>' +
               (ev.contactLink ? '<a href="' + escapeHtml(ev.contactLink) + '" target="_blank" rel="noopener" class="btn btn-outline btn-block" style="margin-top:.8rem;">' + escapeHtml(ev.contactLabel || "Contact organiser") + '</a>' : '') +
             '</aside>'
           ) +
         '</div>' +
       '</div>';
 
-    if (!past){
+    if (!past && hasPayment){
       ev.ticketTypes.forEach(function(tt){
         const row = document.querySelector('.ticket-type-row[data-tt="' + tt.id + '"]');
         row.querySelector(".qty-minus").addEventListener("click", function(){ changeQty(ev, tt.id, -1); });
@@ -605,6 +615,18 @@
       return;
     }
 
+    const hasSnapscan = ev.acceptsSnapscan !== false;
+    const hasEft = !!(ev.bankDetails && ev.bankDetails.accountNumber);
+    if (!hasSnapscan && !hasEft){
+      app.innerHTML =
+        '<div class="wrap page-pad empty-state">' +
+          '<h2>This event is booked by RSVP</h2>' +
+          '<p>' + escapeHtml(ev.title) + ' isn’t booked through the site.</p>' +
+          '<a class="btn btn-brass" href="#/event/' + eventId + '">Back to event</a>' +
+        '</div>';
+      return;
+    }
+
     const lines = cart[eventId] || {};
     const lineItems = ev.ticketTypes
       .filter(function(tt){ return (lines[tt.id] || 0) > 0; })
@@ -637,13 +659,15 @@
             '<label class="field-label">Phone<input type="tel" name="phone" autocomplete="tel" required></label>' +
             '<h3>How would you like to pay?</h3>' +
             '<div class="pay-method-group">' +
-              '<label class="pay-method-card">' +
-                '<input type="radio" name="payMethod" value="snapscan" checked>' +
-                '<div><p class="pay-method-title">Pay via SnapScan</p><p class="pay-method-desc">Tap to pay instantly via the SnapScan app, with the amount filled in for you. We confirm once we receive it.</p></div>' +
-              '</label>' +
-              (ev.bankDetails && ev.bankDetails.accountNumber ?
+              (hasSnapscan ?
                 '<label class="pay-method-card">' +
-                  '<input type="radio" name="payMethod" value="eft">' +
+                  '<input type="radio" name="payMethod" value="snapscan"' + (hasSnapscan ? ' checked' : '') + '>' +
+                  '<div><p class="pay-method-title">Pay via SnapScan</p><p class="pay-method-desc">Tap to pay instantly via the SnapScan app, with the amount filled in for you. We confirm once we receive it.</p></div>' +
+                '</label>'
+              : '') +
+              (hasEft ?
+                '<label class="pay-method-card">' +
+                  '<input type="radio" name="payMethod" value="eft"' + (!hasSnapscan ? ' checked' : '') + '>' +
                   '<div><p class="pay-method-title">Pay via bank transfer</p><p class="pay-method-desc">Pay directly into ' + escapeHtml(ev.organiser) + '\u2019s account. We confirm once we receive it.</p></div>' +
                 '</label>'
               : '') +

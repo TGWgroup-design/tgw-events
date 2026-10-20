@@ -45,6 +45,13 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: "event_already_happened" }, 400);
     }
 
+    if (payMethod === "snapscan" && event.accepts_snapscan === false) {
+      return jsonResponse({ error: "payment_method_unavailable" }, 400);
+    }
+    if (payMethod === "eft" && !event.bank_account_number) {
+      return jsonResponse({ error: "payment_method_unavailable" }, 400);
+    }
+
     const { data: ticketTypes, error: ttErr } = await admin
       .from("ticket_types")
       .select("*")

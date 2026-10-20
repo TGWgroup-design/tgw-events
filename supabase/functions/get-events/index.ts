@@ -42,6 +42,7 @@ Deno.serve(async (req: Request) => {
       description: ev.description,
       includes: ev.includes ?? [],
       image: ev.image_url,
+      acceptsSnapscan: ev.accepts_snapscan,
       contactLink: ev.contact_link,
       contactLabel: ev.contact_label,
       ticketTypes: ticketTypes
