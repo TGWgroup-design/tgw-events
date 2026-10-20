@@ -534,6 +534,7 @@
               '<div class="ticket-total-row"><span>Total</span><span id="ticketTotal">' + formatCurrency(0) + '</span></div>' +
               '<button class="btn btn-brass btn-block" id="continueBtn" disabled>Continue to checkout</button>' +
               '<p class="ticket-fineprint">No booking fees \u00b7 SnapScan or bank transfer</p>' +
+              (ev.contactLink ? '<a href="' + escapeHtml(ev.contactLink) + '" target="_blank" rel="noopener" class="btn btn-outline btn-block" style="margin-top:.8rem;">' + escapeHtml(ev.contactLabel || "Contact organiser") + '</a>' : '') +
             '</aside>'
           ) +
         '</div>' +

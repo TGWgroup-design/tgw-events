@@ -42,6 +42,8 @@ Deno.serve(async (req: Request) => {
       description: ev.description,
       includes: ev.includes ?? [],
       image: ev.image_url,
+      contactLink: ev.contact_link,
+      contactLabel: ev.contact_label,
       ticketTypes: ticketTypes
         .filter((tt) => tt.event_id === ev.id)
         .map((tt) => ({
