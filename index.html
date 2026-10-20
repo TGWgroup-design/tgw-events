@@ -15,9 +15,9 @@
     --pine:#3E5A45;
     --linen:#F3EEE3;
     --linen-soft:#FAF7EF;
-    --brass:#B68D52;
-    --brass-light:#D9B978;
-    --ember:#8C3B2E;
+    --brass:#C79A3F;
+    --brass-light:#EAC468;
+    --ember:#9E2E22;
     --ink:#15140F;
     --white:#FFFFFF;
     --line: rgba(20,20,15,0.12);
@@ -61,8 +61,8 @@
   .hero::before{ content:""; position:absolute; inset:0; background:radial-gradient(circle at 82% 15%, rgba(182,141,82,.2), transparent 60%); pointer-events:none;}
   .hero-grid{ display:grid; grid-template-columns:1.1fr 1fr; gap:3rem; align-items:center; position:relative; z-index:1;}
   .hero-copy{ animation:fadeUp .7s ease both;}
-  .eyebrow{ font-family:'Space Mono',monospace; letter-spacing:.18em; text-transform:uppercase; font-size:.78rem; color:var(--brass-light); margin-bottom:1rem;}
-  .hero h1{ font-family:'Fraunces',serif; font-size:clamp(2.3rem,4.5vw,3.5rem); line-height:1.07; font-weight:600; margin:0 0 1.2rem;}
+  .eyebrow{ font-family:'Space Mono',monospace; font-weight:700; letter-spacing:.2em; text-transform:uppercase; font-size:.85rem; color:var(--brass-light); margin-bottom:1rem;}
+  .hero h1{ font-family:'Fraunces',serif; font-size:clamp(2.6rem,6vw,4.4rem); line-height:1.02; font-weight:700; letter-spacing:-.01em; margin:0 0 1.2rem;}
   .hero-sub{ font-size:1.05rem; line-height:1.65; color:rgba(243,238,227,.82); max-width:30rem; margin-bottom:2rem;}
   .hero-feature{ background:var(--linen-soft); box-shadow:var(--shadow); animation:fadeUp .7s .15s ease both;}
   .hero-feature-img{ width:100%; height:320px; object-fit:cover; display:block;}
@@ -72,13 +72,13 @@
   .hero-feature-org{ font-size:.9rem; color:var(--ember); margin-bottom:.5rem; font-weight:600;}
   .hero-feature-meta{ font-size:.86rem; color:rgba(20,20,15,.65); margin-bottom:1.1rem;}
   .hero-feature-row{ display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;}
-  .price-tag{ font-family:'Space Mono',monospace; font-size:.88rem; background:rgba(27,43,30,.08); padding:.4rem .8rem; border-radius:999px; color:var(--forest); white-space:nowrap;}
+  .price-tag{ font-family:'Space Mono',monospace; font-weight:700; font-size:.88rem; background:rgba(158,46,34,.1); padding:.4rem .8rem; border-radius:999px; color:var(--ember); white-space:nowrap;}
   @keyframes fadeUp{ from{opacity:0; transform:translateY(16px);} to{opacity:1; transform:translateY(0);} }
 
   /* events section */
   .events-section{ padding:5rem 0; background:var(--linen);}
   .section-head{ max-width:34rem; margin-bottom:2.5rem;}
-  .section-head h2{ font-family:'Fraunces',serif; font-size:2rem; margin:0 0 .5rem; color:var(--forest);}
+  .section-head h2{ font-family:'Fraunces',serif; font-size:2.4rem; font-weight:700; letter-spacing:-.01em; margin:0 0 .5rem; color:var(--forest);}
   .section-head p{ color:rgba(20,20,15,.65); margin:0;}
   .events-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1.8rem;}
   .event-card{ background:var(--white); border:1px solid var(--line); border-radius:18px; overflow:hidden; transition:transform .2s ease, box-shadow .2s ease;}
@@ -87,7 +87,7 @@
   .event-card-image img{ width:100%; height:100%; object-fit:cover; display:block;}
   .event-card-body{ padding:1.4rem 1.5rem 1.6rem;}
   .event-card-org{ font-size:.8rem; color:var(--ember); font-weight:600; margin:0 0 .3rem;}
-  .event-card-body h3{ font-family:'Fraunces',serif; font-size:1.3rem; margin:0 0 .4rem; color:var(--forest);}
+  .event-card-body h3{ font-family:'Fraunces',serif; font-size:1.4rem; font-weight:700; margin:0 0 .4rem; color:var(--forest);}
   .event-card-meta{ font-size:.86rem; color:rgba(20,20,15,.6); margin-bottom:1rem;}
   .event-card-foot{ display:flex; align-items:center; justify-content:space-between; gap:.8rem; flex-wrap:wrap;}
   .event-card-invite{ display:flex; align-items:center; justify-content:center; border:1.5px dashed var(--pine); background:transparent;}
@@ -101,7 +101,7 @@
   /* how it works */
   .how-section{ padding:5rem 0 6rem; background:var(--linen-soft);}
   .how-steps{ list-style:none; display:grid; grid-template-columns:repeat(3,1fr); gap:2rem; padding:0; margin:0;}
-  .how-num{ display:block; font-family:'Space Mono',monospace; color:var(--brass); font-size:.9rem; margin-bottom:.6rem;}
+  .how-num{ display:block; font-family:'Space Mono',monospace; font-weight:700; color:var(--ember); font-size:1.15rem; margin-bottom:.6rem;}
   .how-steps h4{ font-family:'Fraunces',serif; font-size:1.2rem; color:var(--forest); margin:0 0 .4rem;}
   .how-steps p{ color:rgba(20,20,15,.6); font-size:.92rem; line-height:1.5; margin:0;}
 
