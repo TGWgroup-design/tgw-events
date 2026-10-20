@@ -45,6 +45,8 @@ Deno.serve(async (req: Request) => {
       acceptsSnapscan: ev.accepts_snapscan,
       contactLink: ev.contact_link,
       contactLabel: ev.contact_label,
+      popContactLink: ev.pop_contact_link,
+      popContactLabel: ev.pop_contact_label,
       ticketTypes: ticketTypes
         .filter((tt) => tt.event_id === ev.id)
         .map((tt) => ({

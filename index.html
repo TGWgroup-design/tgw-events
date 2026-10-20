@@ -796,6 +796,15 @@
 
     const mailtoHref = "mailto:info@tgwgroup.co.za?subject=" + encodeURIComponent("Proof of payment \u2013 Order " + orderId) + "&body=" + encodeURIComponent(emailBody);
 
+    const waText =
+      "Proof of payment for order " + orderId + "\n\n" +
+      "Event: " + ev.title + "\n" +
+      "Tickets: " + lineItems.map(function(li){ return li.qty + "x " + li.name; }).join(", ") + "\n" +
+      "Total: " + formatCurrency(total) + "\n" +
+      "Name: " + attendee.firstName + " " + attendee.lastName + "\n\n" +
+      "(Attaching proof of payment)";
+    const waHref = ev.popContactLink ? ev.popContactLink + "?text=" + encodeURIComponent(waText) : null;
+
     app.innerHTML =
       '<div class="wrap page-pad eft-page">' +
         '<span class="status-badge">Pending \u00b7 awaiting payment confirmation</span>' +
@@ -830,8 +839,13 @@
           '<p style="margin:.6rem 0 0; font-size:.85rem; color:rgba(20,20,15,.6);">Order reference: ' + escapeHtml(orderId) + '</p>' +
         '</div>' +
 
-        '<a href="' + mailtoHref + '" class="btn btn-brass btn-block">Email proof of payment</a>' +
-        '<p class="ticket-fineprint">We\u2019ll confirm by email once we\u2019ve matched your payment \u2014 usually within a day.</p>' +
+        (waHref ?
+          '<a href="' + waHref + '" target="_blank" rel="noopener" class="btn btn-brass btn-block">Send proof of payment' + (ev.popContactLabel ? ' to ' + escapeHtml(ev.popContactLabel) : '') + ' on WhatsApp</a>' +
+          '<p class="ticket-fineprint">We\u2019ll confirm by email once we\u2019ve matched your payment \u2014 usually within a day.</p>'
+        :
+          '<a href="' + mailtoHref + '" class="btn btn-brass btn-block">Email proof of payment</a>' +
+          '<p class="ticket-fineprint">We\u2019ll confirm by email once we\u2019ve matched your payment \u2014 usually within a day.</p>'
+        ) +
         '<a href="#/" class="back-link" style="display:block; margin-top:1.6rem; text-align:center;">Back to events</a>' +
       '</div>';
 
