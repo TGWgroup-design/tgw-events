@@ -527,35 +527,35 @@
               '<p class="ticket-fineprint">Tickets are no longer available for ' + escapeHtml(ev.title) + '. Check the homepage for what\u2019s currently on sale.</p>' +
               '<a href="#/" class="btn btn-outline btn-block">See upcoming events</a>' +
             '</aside>'
-          : !hasPayment ?
-            '<aside class="ticket-card">' +
-              '<h3>Booking is by RSVP</h3>' +
-              '<p class="ticket-fineprint">' + escapeHtml(ev.title) + ' isn\u2019t booked through the site \u2014 reach out directly to reserve your spot.</p>' +
-              (ev.contactLink ? '<a href="' + escapeHtml(ev.contactLink) + '" target="_blank" rel="noopener" class="btn btn-brass btn-block">' + escapeHtml(ev.contactLabel || "Contact organiser") + '</a>' : '') +
-            '</aside>'
           :
             '<aside class="ticket-card">' +
               '<h3>Select tickets</h3>' +
               '<div class="ticket-types">' + ev.ticketTypes.map(function(tt){ return ticketTypeRowHTML(ev.id, tt); }).join("") + '</div>' +
               '<div class="ticket-divider"></div>' +
               '<div class="ticket-total-row"><span>Total</span><span id="ticketTotal">' + formatCurrency(0) + '</span></div>' +
-              '<button class="btn btn-brass btn-block" id="continueBtn" disabled>Continue to checkout</button>' +
-              '<p class="ticket-fineprint">No booking fees \u00b7 ' + payMethodsText + '</p>' +
-              (ev.contactLink ? '<a href="' + escapeHtml(ev.contactLink) + '" target="_blank" rel="noopener" class="btn btn-outline btn-block" style="margin-top:.8rem;">' + escapeHtml(ev.contactLabel || "Contact organiser") + '</a>' : '') +
+              (hasPayment ?
+                '<button class="btn btn-brass btn-block" id="continueBtn" disabled>Continue to checkout</button>' +
+                '<p class="ticket-fineprint">No booking fees \u00b7 ' + payMethodsText + '</p>'
+              :
+                '<a href="' + escapeHtml(ev.contactLink || "#") + '" target="_blank" rel="noopener" class="btn btn-brass btn-block">' + escapeHtml(ev.contactLabel || "RSVP via WhatsApp") + '</a>' +
+                '<p class="ticket-fineprint">Tickets aren\u2019t sold through the site \u2014 RSVP to reserve your spot.</p>'
+              ) +
             '</aside>'
           ) +
         '</div>' +
       '</div>';
 
-    if (!past && hasPayment){
+    if (!past){
       ev.ticketTypes.forEach(function(tt){
         const row = document.querySelector('.ticket-type-row[data-tt="' + tt.id + '"]');
         row.querySelector(".qty-minus").addEventListener("click", function(){ changeQty(ev, tt.id, -1); });
         row.querySelector(".qty-plus").addEventListener("click", function(){ changeQty(ev, tt.id, 1); });
       });
-      document.getElementById("continueBtn").addEventListener("click", function(){
-        navigate("#/checkout/" + ev.id);
-      });
+      if (hasPayment){
+        document.getElementById("continueBtn").addEventListener("click", function(){
+          navigate("#/checkout/" + ev.id);
+        });
+      }
       updateTicketTotal(ev);
     }
   }
