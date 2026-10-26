@@ -7,7 +7,7 @@
 <meta name="description" content="TGW Events is a ticketing ecosystem for handpicked experiences — discover events, purchase tickets, and attend. No booking fees. Pay via SnapScan or bank transfer.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Pinyon+Script&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --forest:#5B1A1F;
@@ -20,9 +20,13 @@
     --ember:#8B2330;
     --ink:#15140F;
     --white:#FFFFFF;
+    --oxblood:#3A0D12;
+    --oxblood-soft:#4A1319;
     --line: rgba(20,20,15,0.12);
     --shadow: 0 24px 60px -20px rgba(15,20,15,0.35);
   }
+
+  .script-accent{ font-family:'Pinyon Script',cursive; font-weight:400; font-size:1.4em; line-height:1;}
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
   body{margin:0; font-family:'Work Sans',sans-serif; color:var(--ink); background:var(--linen); -webkit-font-smoothing:antialiased;}
@@ -48,6 +52,8 @@
   .btn-brass:hover{ background:var(--brass-light); transform:translateY(-1px);}
   .btn-outline{ background:transparent; border-color:var(--forest); color:var(--forest);}
   .btn-outline:hover{ background:var(--forest); color:var(--linen);}
+  .btn-outline-light{ background:transparent; border-color:rgba(243,238,227,.5); color:var(--linen);}
+  .btn-outline-light:hover{ background:rgba(243,238,227,.12);}
   .btn-block{ width:100%;}
   .btn:disabled{ opacity:.45; cursor:not-allowed; transform:none;}
 
@@ -55,12 +61,13 @@
   .arch{ border-radius:220px 220px 18px 18px; overflow:hidden; position:relative;}
 
   /* hero */
-  .hero{ background:var(--linen); color:var(--forest); padding:4.5rem 0 6rem; position:relative; overflow:hidden;}
+  .hero{ background:var(--oxblood); color:var(--linen); padding:4.5rem 0 6rem; position:relative; overflow:hidden;}
+  .hero::before{ content:""; position:absolute; top:-10%; right:-5%; width:50%; height:140%; background:radial-gradient(circle, rgba(201,166,108,.16), transparent 65%); pointer-events:none; filter:blur(10px);}
   .hero-grid{ display:grid; grid-template-columns:1.1fr 1fr; gap:3rem; align-items:center; position:relative; z-index:1;}
   .hero-copy{ animation:fadeUp .7s ease both;}
-  .eyebrow{ font-family:'Space Mono',monospace; font-weight:700; letter-spacing:.2em; text-transform:uppercase; font-size:.85rem; color:var(--ember); margin-bottom:1rem;}
-  .hero h1{ font-family:'Playfair Display',serif; font-size:clamp(2.6rem,6vw,4.4rem); line-height:1.02; font-weight:700; letter-spacing:-.01em; margin:0 0 1.2rem;}
-  .hero-sub{ font-size:1.05rem; line-height:1.65; color:rgba(20,20,15,.7); max-width:30rem; margin-bottom:2rem;}
+  .eyebrow{ font-family:'Space Mono',monospace; font-weight:700; letter-spacing:.2em; text-transform:uppercase; font-size:.85rem; color:var(--brass-light); margin-bottom:1rem;}
+  .hero h1{ font-family:'Playfair Display',serif; font-size:clamp(2.6rem,6vw,4.4rem); line-height:1.05; font-weight:700; letter-spacing:-.01em; margin:0 0 1.2rem;}
+  .hero-sub{ font-size:1.05rem; line-height:1.65; color:rgba(243,238,227,.78); max-width:30rem; margin-bottom:2rem;}
   .hero-feature{ background:var(--linen-soft); box-shadow:var(--shadow); animation:fadeUp .7s .15s ease both;}
   .hero-feature-img{ width:100%; height:320px; object-fit:cover; display:block;}
   .hero-feature-overlay{ padding:1.6rem 1.8rem 2rem; color:var(--ink);}
@@ -103,10 +110,11 @@
   .how-steps p{ color:rgba(20,20,15,.6); font-size:.92rem; line-height:1.5; margin:0;}
 
   /* organiser CTA */
-  .organiser-cta-section{ padding:5rem 0; background:var(--linen);}
-  .organiser-cta{ text-align:center; max-width:40rem; margin:0 auto;}
-  .organiser-cta h2{ font-family:'Playfair Display',serif; font-size:clamp(1.8rem,4vw,2.6rem); font-weight:700; color:var(--forest); margin:0 0 1rem;}
-  .organiser-cta p{ color:rgba(20,20,15,.68); font-size:1.02rem; line-height:1.6; margin:0 0 1.8rem;}
+  .organiser-cta-section{ padding:5rem 0; background:var(--oxblood); position:relative; overflow:hidden;}
+  .organiser-cta-section::before{ content:""; position:absolute; top:-20%; left:50%; transform:translateX(-50%); width:60%; height:160%; background:radial-gradient(circle, rgba(201,166,108,.14), transparent 65%); pointer-events:none; filter:blur(10px);}
+  .organiser-cta{ text-align:center; max-width:40rem; margin:0 auto; position:relative; z-index:1;}
+  .organiser-cta h2{ font-family:'Playfair Display',serif; font-size:clamp(1.8rem,4vw,2.6rem); font-weight:700; color:var(--linen); margin:0 0 1rem;}
+  .organiser-cta p{ color:rgba(243,238,227,.78); font-size:1.02rem; line-height:1.6; margin:0 0 1.8rem;}
 
   /* footer */
   .site-footer{ background:var(--linen); color:rgba(20,20,15,.75); padding:3.5rem 0 2rem; border-top:1px solid var(--line);}
@@ -247,11 +255,13 @@
   .about-approach-list li{ font-size:.95rem; line-height:1.6; color:rgba(20,20,15,.75); padding:.6rem 0; border-top:1px solid var(--line);}
   .about-approach-list li:first-child{ border-top:none;}
   .about-approach-list strong{ color:var(--forest);}
-  .about-closing-cta{ text-align:center; background:var(--linen-soft); border-radius:20px; padding:3rem 2rem; margin-top:3rem;}
-  .about-closing-cta h2{ font-family:'Playfair Display',serif; font-size:clamp(1.6rem,3.5vw,2.2rem); color:var(--forest); margin:0 0 1rem;}
-  .about-closing-cta p{ color:rgba(20,20,15,.7); line-height:1.6; max-width:34rem; margin:0 auto 1.6rem;}
+  .about-closing-cta{ text-align:center; background:var(--oxblood); border-radius:20px; padding:3rem 2rem; margin-top:3rem; position:relative; overflow:hidden;}
+  .about-closing-cta::before{ content:""; position:absolute; top:-30%; left:50%; transform:translateX(-50%); width:70%; height:160%; background:radial-gradient(circle, rgba(201,166,108,.14), transparent 65%); pointer-events:none; filter:blur(10px);}
+  .about-closing-cta > *{ position:relative; z-index:1;}
+  .about-closing-cta h2{ font-family:'Playfair Display',serif; font-size:clamp(1.6rem,3.5vw,2.2rem); color:var(--linen); margin:0 0 1rem;}
+  .about-closing-cta p{ color:rgba(243,238,227,.78); line-height:1.6; max-width:34rem; margin:0 auto 1.6rem;}
   .about-closing-links{ display:flex; flex-wrap:wrap; justify-content:center; gap:.9rem; margin-bottom:1.6rem;}
-  .about-tagline{ font-family:'Space Mono',monospace; font-size:.82rem; color:rgba(20,20,15,.55); line-height:1.6; margin:0;}
+  .about-tagline{ font-family:'Space Mono',monospace; font-size:.82rem; color:rgba(243,238,227,.55); line-height:1.6; margin:0;}
 
   @media (max-width:880px){
     .hero-grid{ grid-template-columns:1fr;}
@@ -441,9 +451,9 @@
       '<section class="hero"><div class="wrap hero-grid">' +
         '<div class="hero-copy">' +
           '<p class="eyebrow">TGW Events</p>' +
-          '<h1>Discover Experiences.<br>Purchase Tickets.<br>Attend.</h1>' +
+          '<h1>Discover Experiences.<br>Purchase Tickets.<br><span class="script-accent">Attend.</span></h1>' +
           '<p class="hero-sub">The ticketing ecosystem for celebrations from the people who throw them best. Book your spot online, no booking fees, no fuss.</p>' +
-          '<a href="#events" class="btn btn-outline">See what\u2019s on</a>' +
+          '<a href="#events" class="btn btn-outline-light">See what\u2019s on</a>' +
         '</div>' +
         (featured ?
           '<div class="hero-feature arch">' +
@@ -493,7 +503,7 @@
       '</div></section>' +
 
       '<section class="organiser-cta-section"><div class="wrap organiser-cta">' +
-        '<h2>Hosting an Event?<br>Let’s Make It Happen.</h2>' +
+        '<h2>Hosting an Event?<br>Let’s Make It <span class="script-accent">Happen.</span></h2>' +
         '<p>From ticketing alone to full-service planning, coordination and marketing, TGW Events can run the whole show, or just the part you need.</p>' +
         '<a href="#/for-organisers" class="btn btn-brass">Plan your event with TGW</a>' +
       '</div></section>';
@@ -1305,12 +1315,12 @@
         '</ul>' +
 
         '<div class="about-closing-cta">' +
-          '<h2>Let’s Bring Your Event to Life</h2>' +
+          '<h2>Let’s Bring Your Event to <span class="script-accent">Life</span></h2>' +
           '<p>Have an event in mind? Let’s make it happen. Whether you’re planning a corporate gathering, launching a brand, hosting a lifestyle experience or simply looking for a reliable ticketing solution, TGW Events is here to support your journey.</p>' +
           '<div class="about-closing-links">' +
             '<a href="#/" class="btn btn-brass">Discover Events</a>' +
-            '<a href="#/for-organisers" class="btn btn-outline">List Your Event</a>' +
-            '<a href="#/for-organisers" class="btn btn-outline">Book Our Event Services</a>' +
+            '<a href="#/for-organisers" class="btn btn-outline-light">List Your Event</a>' +
+            '<a href="#/for-organisers" class="btn btn-outline-light">Book Our Event Services</a>' +
           '</div>' +
           '<p class="about-tagline">TGW Events: Discover. Book. Experience.<br>Powered by TGW Group. Strategy. Innovation. Experiences. Execution.</p>' +
         '</div>' +
