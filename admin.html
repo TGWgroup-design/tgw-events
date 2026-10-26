@@ -53,6 +53,11 @@
     </div>
 
     <div class="card">
+      <h2 style="margin-top:0;">Event services enquiries</h2>
+      <div id="enquiriesList"><p class="order-meta">Loading…</p></div>
+    </div>
+
+    <div class="card">
       <h2 style="margin-top:0;">Add an event</h2>
       <form id="addEventForm">
         <label>Event ID (URL slug, e.g. "summer-jazz-night")<input type="text" name="id" required></label>
@@ -121,6 +126,14 @@
     return "R" + (cents / 100).toFixed(2);
   }
 
+  // Order and enquiry text fields come from public, unauthenticated
+  // submissions (checkout / enquiry forms) -- escape before using innerHTML
+  // so a guest can't inject markup/script into staff's authenticated session.
+  function escapeHtml(str){
+    return String(str == null ? "" : str)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
   function renderTicketLinks(row, ticketTokens){
     const list = document.createElement("div");
     list.style.marginTop = ".5rem";
@@ -168,11 +181,11 @@
     orders.forEach(function(o){
       const row = document.createElement("div");
       row.className = "order-row";
-      const itemsText = o.lineItems.map(function(li){ return li.quantity + "x " + li.name; }).join(", ");
+      const itemsText = o.lineItems.map(function(li){ return li.quantity + "x " + escapeHtml(li.name); }).join(", ");
       row.innerHTML =
         "<div>" +
-          "<strong>" + o.orderRef + "</strong> — " + o.eventTitle + "<br>" +
-          "<span class=\"order-meta\">" + o.attendeeName + " · " + o.attendeeEmail + " · " + o.payMethod.toUpperCase() + " · " + itemsText + " · " + formatRands(o.totalCents) + "</span>" +
+          "<strong>" + escapeHtml(o.orderRef) + "</strong> — " + escapeHtml(o.eventTitle) + "<br>" +
+          "<span class=\"order-meta\">" + escapeHtml(o.attendeeName) + " · " + escapeHtml(o.attendeeEmail) + " · " + escapeHtml(o.payMethod.toUpperCase()) + " · " + itemsText + " · " + formatRands(o.totalCents) + "</span>" +
           "<p class=\"msg hidden\"></p>" +
         "</div>";
       const btn = document.createElement("button");
@@ -215,11 +228,50 @@
     });
   }
 
+  const enquiriesList = document.getElementById("enquiriesList");
+
+  async function loadEnquiries(){
+    enquiriesList.innerHTML = "<p class=\"order-meta\">Loading…</p>";
+    const result = await callFunction("list-enquiries");
+    if (!result.ok){
+      enquiriesList.innerHTML = "<p class=\"msg error\">Couldn’t load enquiries.</p>";
+      return;
+    }
+    const enquiries = result.json.enquiries || [];
+    if (enquiries.length === 0){
+      enquiriesList.innerHTML = "<p class=\"order-meta\">No enquiries yet.</p>";
+      return;
+    }
+    enquiriesList.innerHTML = "";
+    enquiries.forEach(function(e){
+      const row = document.createElement("div");
+      row.className = "order-row";
+      row.style.flexDirection = "column";
+      row.style.alignItems = "flex-start";
+      const details = [
+        e.eventDate ? "Date: " + escapeHtml(e.eventDate) : null,
+        e.estimatedGuests ? "Guests: " + escapeHtml(e.estimatedGuests) : null,
+        e.estimatedBudget ? "Budget: " + escapeHtml(e.estimatedBudget) : null,
+        e.venueLocation ? "Venue: " + escapeHtml(e.venueLocation) : null
+      ].filter(Boolean).join(" · ");
+      row.innerHTML =
+        "<div>" +
+          "<strong>" + escapeHtml(e.serviceRequired) + "</strong> — " + escapeHtml(e.eventType) + "<br>" +
+          "<span class=\"order-meta\">" + escapeHtml(e.contactName) + (e.organisation ? " (" + escapeHtml(e.organisation) + ")" : "") + " · " + escapeHtml(e.email) + " · " + escapeHtml(e.phone) + "</span>" +
+          (details ? "<br><span class=\"order-meta\">" + details + "</span>" : "") +
+          (e.eventDetails ? "<p style=\"margin:.5rem 0 0; font-size:.88rem;\">" + escapeHtml(e.eventDetails) + "</p>" : "") +
+          "<p class=\"order-meta\" style=\"margin-top:.4rem;\">Submitted " + escapeHtml(new Date(e.createdAt).toLocaleString()) + "</p>" +
+        "</div>";
+      enquiriesList.appendChild(row);
+    });
+  }
+
   async function showLoggedIn(){
     loginCard.classList.add("hidden");
     appArea.classList.remove("hidden");
     signOutBtn.classList.remove("hidden");
     await loadOrders();
+    await loadEnquiries();
   }
 
   function showLoggedOut(){
